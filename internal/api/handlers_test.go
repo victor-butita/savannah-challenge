@@ -20,23 +20,23 @@ import (
 )
 
 type MockSMSService struct {
-	mock.Mock
-	wg *sync.WaitGroup
+	Mock mock.Mock
+	wg   *sync.WaitGroup
 }
 
 func (m *MockSMSService) Send(recipient, message string) {
-	m.Called(recipient, message)
+	m.Mock.Called(recipient, message)
 	if m.wg != nil {
 		m.wg.Done()
 	}
 }
 
 type MockOIDCVerifier struct {
-	mock.Mock
+	Mock mock.Mock
 }
 
 func (m *MockOIDCVerifier) Verify(ctx context.Context, rawIDToken string) (*oidc.IDToken, error) {
-	args := m.Called(ctx, rawIDToken)
+	args := m.Mock.Called(ctx, rawIDToken)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -106,12 +106,12 @@ func TestCreateOrder(t *testing.T) {
 	}
 	body, _ := json.Marshal(orderReq)
 
-	mockVerifier.On("Verify", mock.Anything, "valid-token").Return(&oidc.IDToken{}, nil)
+	mockVerifier.Mock.On("Verify", mock.Anything, "valid-token").Return(&oidc.IDToken{}, nil)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	mockSMS.wg = &wg
-	mockSMS.On("Send", "+254700000000", "Dear Test User, your order for Laptop has been received.").Once()
+	mockSMS.Mock.On("Send", "+254700000000", "Dear Test User, your order for Laptop has been received.").Once()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/v1/orders", bytes.NewBuffer(body))
@@ -119,9 +119,9 @@ func TestCreateOrder(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer valid-token")
 	router.ServeHTTP(w, req)
 
-	wg.Wait() // wait until Send is called
+	wg.Wait()
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	mockSMS.AssertExpectations(t)
-	mockVerifier.AssertExpectations(t)
+	mockSMS.Mock.AssertExpectations(t)
+	mockVerifier.Mock.AssertExpectations(t)
 }
