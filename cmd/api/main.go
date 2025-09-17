@@ -44,5 +44,7 @@ func main() {
 		}
 	}
 
-	router.Run(":" + cfg.ServerPort)
+	if err := router.Run(":" + cfg.ServerPort); err != nil {
+		log.Fatalf("failed to run server: %v", err)
+	}
 }

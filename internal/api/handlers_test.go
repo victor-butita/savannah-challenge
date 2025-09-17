@@ -87,7 +87,8 @@ func TestCreateCustomer(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	var customer models.Customer
-	json.Unmarshal(w.Body.Bytes(), &customer)
+	err := json.Unmarshal(w.Body.Bytes(), &customer)
+	assert.NoError(t, err, "Failed to unmarshal response body")
 	assert.Equal(t, customerReq.Name, customer.Name)
 	assert.Equal(t, customerReq.Code, customer.Code)
 }
